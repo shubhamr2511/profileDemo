@@ -9,6 +9,7 @@ import 'package:profiledemo/screens/NewUserpage.dart';
 import 'package:profiledemo/screens/otpScreen.dart';
 import 'package:profiledemo/screens/profilePage.dart';
 import 'package:profiledemo/screens/registerPhone.dart';
+import 'package:profiledemo/services/handleDynamicLinks.dart';
 import 'package:profiledemo/services/signIn.dart';
 import 'package:profiledemo/services/storageServices.dart';
 import 'package:profiledemo/styles.dart';
@@ -27,7 +28,6 @@ Future<void> initUniLinks() async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-
   runApp(MyApp());
 }
 
@@ -63,8 +63,12 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyHome extends StatelessWidget {
-  
+class MyHome extends StatefulWidget {
+  @override
+  _MyHomeState createState() => _MyHomeState();
+}
+
+class _MyHomeState extends State<MyHome> {
   User? user = AuthService.getCurrentUser();
 
   @override
@@ -74,6 +78,12 @@ class MyHome extends StatelessWidget {
     }
     return RegisterPhonePage();
   }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
 }
 
 getdata(user) async {
@@ -82,7 +92,8 @@ getdata(user) async {
       .doc(user.uid)
       .get()
       .then((user) {
-    Get.offAll(ProfilePage(uid: user.id, user: UserModel.fromJson(user.data()!)));
+    Get.offAll(
+        ProfilePage(uid: user.id, user: UserModel.fromJson(user.data()!)));
   });
 }
 

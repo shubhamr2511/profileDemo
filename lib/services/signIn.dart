@@ -61,7 +61,7 @@ class AuthService {
     }
 
     _onCodeSent(String verificationId, int? resendToken) async {
-      Get.to(OtpScreen(phone: _phone));
+      // Get.to(OtpScreen(phone: _phone ,verificationId:,));
       PhoneAuthCredential credential = PhoneAuthProvider.credential(verificationId: verificationId, smsCode: _smsCode);
 
     // Sign the user in (or link) with the credential

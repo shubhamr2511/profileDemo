@@ -89,21 +89,35 @@ class NewUserpage extends StatelessWidget {
             keyboardType: TextInputType.multiline,
             style: bodyText2White60,
           ),
-          space(20),
-          TextField(
-            controller: imageUrl,
-            decoration: InputDecoration(
-              // counterText: "",
+          // space(20),
+          // TextField(
+          //   controller: imageUrl,
+          //   decoration: InputDecoration(
+          //     // counterText: "",
 
-              labelText: "Enter your image Url(you can leave it empty)",
-            ),
-            keyboardType: TextInputType.url,
-            style: bodyText2White60,
-          ),
+          //     labelText: "Enter your image Url(you can leave it empty)",
+          //   ),
+          //   keyboardType: TextInputType.url,
+          //   style: bodyText2White60,
+          // ),
           space(50),
           Obx(() => FlatButton(
                 onPressed: _canContinue.value
+                
                     ? () async {
+                      showCupertinoDialog(
+                            context: context,
+                            builder: (context) => CupertinoAlertDialog(
+                              content: Container(
+                                height: 50,
+                                width: 50,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          );
                         UserModel user = UserModel(
                             name: name.text,
                             email: email.text,

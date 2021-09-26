@@ -1,16 +1,35 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:profiledemo/models/user.dart';
 import 'package:profiledemo/screens/otpScreen.dart';
+import 'package:profiledemo/screens/profilePage.dart';
+import 'package:profiledemo/services/handleDynamicLinks.dart';
 import 'package:profiledemo/services/signIn.dart';
+import 'package:profiledemo/services/storageServices.dart';
 import 'package:profiledemo/styles.dart';
 import 'package:get/get.dart';
 
 var _canTap = false.obs;
 
-class RegisterPhonePage extends StatelessWidget {
+class RegisterPhonePage extends StatefulWidget {
+  @override
+  _RegisterPhonePageState createState() => _RegisterPhonePageState();
+}
+
+class _RegisterPhonePageState extends State<RegisterPhonePage> {
+  String? _verificationCode;
+  @override
+  void initState() {
+    
+    // TODO: implement initState
+    super.initState();
+  }
   final TextEditingController phone = new TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+    
     return Scaffold(
       appBar: AppBar(),
       body: Container(
@@ -56,7 +75,20 @@ class RegisterPhonePage extends StatelessWidget {
             Obx(() => FlatButton(
                   onPressed: _canTap.value
                       ? () {
-                          Get.to(OtpScreen(phone: phone.text));
+                          showCupertinoDialog(
+                            context: context,
+                            builder: (context) => CupertinoAlertDialog(
+                              content: Container(
+                                height: 50,
+                                width: 50,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          );
+                          _verifyPhone();
                         }
                       : null,
                   child: Container(
@@ -74,5 +106,42 @@ class RegisterPhonePage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  _verifyPhone() async {
+    await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: '+91${phone.text}',
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          await FirebaseAuth.instance
+              .signInWithCredential(credential)
+              .then((value) async {
+            if (value.user != null) {
+              UserModel user = UserModel.fromJson(
+                  await StorageService().getUserDataById(value.user!.uid));
+              Get.offAll(ProfilePage(user: user, uid: value.user!.uid));
+            }
+          });
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(e.message!)));
+          Get.back();
+          Get.back();
+        },
+        codeSent: (String verficationID, int? resendToken) {
+          setState(() {
+            _verificationCode = verficationID;
+          });
+          Get.offAll(
+              OtpScreen(verificationId: _verificationCode, phone: phone.text));
+        },
+        codeAutoRetrievalTimeout: (String verificationID) {
+          setState(() {
+            _verificationCode = verificationID;
+          });
+          Get.back();
+          Get.back();
+        },
+        timeout: Duration(seconds: 120));
   }
 }

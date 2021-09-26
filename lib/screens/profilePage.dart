@@ -1,20 +1,37 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:profiledemo/models/user.dart';
+import 'package:profiledemo/services/handleDynamicLinks.dart';
 import 'package:profiledemo/services/signIn.dart';
 import 'package:profiledemo/styles.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share/share.dart';
 import 'components.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   final UserModel user;
   final String uid;
-  const ProfilePage({required this.uid, required this.user, Key? key}) : super(key: key);
+  const ProfilePage({required this.uid, required this.user, Key? key})
+      : super(key: key);
+
+  @override
+  _ProfilePageState createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  String? link = null;
+
+  @override
+  void initState() {
+    DynamicLinks.handleDynamicLink();
+    // TODO: implement initState
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    print(user.getDetails());
+    print(widget.user.getDetails());
     return Scaffold(
         appBar: AppBar(
           title: Text("Profile"),
@@ -41,7 +58,7 @@ class ProfilePage extends StatelessWidget {
           child:
               ListView(padding: EdgeInsets.symmetric(vertical: 16), children: [
             Container(
-              child: user.imageUrl == null || user.imageUrl == ""
+              child: widget.user.imageUrl == null || widget.user.imageUrl == ""
                   ? Row(
                       children: [
                         Expanded(
@@ -60,17 +77,17 @@ class ProfilePage extends StatelessWidget {
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      user.name == null
+                                      widget.user.name == null
                                           ? Text("name")
                                           : Text(
-                                              user.name!,
+                                              widget.user.name!,
                                               style: headline6,
                                             ),
                                       IconButton(
-                                        onPressed: () {
-                                          Share.share(
-                                              "https://app.profiledemo.com?" +
-                                                  uid);
+                                        onPressed: () async {
+                                          var link = await DynamicLinks
+                                              .createProfileLink(widget.uid);
+                                          Share.share(link);
                                         },
                                         icon: Icon(Icons.share),
                                         highlightColor: white,
@@ -79,7 +96,10 @@ class ProfilePage extends StatelessWidget {
                                   ),
                                   Row(
                                     children: [
-                                      Text(user.city!, style: subtitle18,),
+                                      Text(
+                                        widget.user.city!,
+                                        style: subtitle18,
+                                      ),
                                       Icon(Icons.location_city)
                                     ],
                                   )
@@ -97,12 +117,12 @@ class ProfilePage extends StatelessWidget {
                         child: Stack(
                           children: [
                             Image.network(
-                              user.imageUrl!,
+                              widget.user.imageUrl!,
                               fit: BoxFit.fill,
                               width: MediaQuery.of(context).size.width,
                             ),
                             _buildGradient(),
-                            _buildUserDetails(user, uid),
+                            _buildUserDetails(widget.user, widget.uid),
                           ],
                         ),
                       ),
@@ -111,29 +131,29 @@ class ProfilePage extends StatelessWidget {
             space(20),
             DetailButton(
               onTap: () async {
-                String url = 'tel:' + user.phone!;
+                String url = 'tel:' + widget.user.phone!;
                 if (await canLaunch(url)) {
                   await launch(url);
                 } else {
                   throw 'Could not launch $url';
                 }
               },
-              text: user.phone!,
+              text: widget.user.phone!,
               icon: Icon(Icons.phone_android_outlined),
             ),
             space(20),
             DetailButton(
               onTap: () async {
                 launch(
-                    'mailto:${user.email}?subject=This is Subject Title&body=This is Body of Email');
+                    'mailto:${widget.user.email}?subject=This is Subject Title&body=This is Body of Email');
               },
-              text: user.email!,
+              text: widget.user.email!,
               icon: Icon(Icons.email),
             ),
             space(20),
             DetailBox(
               fieldName: "About",
-              fieldtext: user.about!,
+              fieldtext: widget.user.about!,
             )
           ]),
         ));
@@ -174,15 +194,14 @@ Widget _buildUserDetails(UserModel user, uid) {
                         maxLines: 2,
                         overflow: TextOverflow.fade,
                       ),
-                      IconButton(
-                                    onPressed: () {
-                                      Share.share(
-                                          "https://app.profiledemo.com?" +
-                                              uid);
-                                    },
-                                    icon: Icon(Icons.share),
-                                    highlightColor: white,
-                                  )
+                IconButton(
+                  onPressed: () async {
+                    var link = await DynamicLinks.createProfileLink(uid);
+                    Share.share(link);
+                  },
+                  icon: Icon(Icons.share),
+                  highlightColor: white,
+                )
               ],
             ),
             Row(children: [

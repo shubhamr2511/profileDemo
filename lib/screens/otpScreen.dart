@@ -1,9 +1,11 @@
 import 'package:bot_toast/bot_toast.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:profiledemo/models/user.dart';
 import 'package:profiledemo/screens/NewUserpage.dart';
 import 'package:profiledemo/screens/profilePage.dart';
+import 'package:profiledemo/screens/registerPhone.dart';
 import 'package:profiledemo/services/signIn.dart';
 import 'package:profiledemo/services/storageServices.dart';
 import 'package:profiledemo/styles.dart';
@@ -14,15 +16,15 @@ var _canContinue = false.obs;
 
 class OtpScreen extends StatefulWidget {
   final String phone;
-
-  OtpScreen({required this.phone, Key? key}) : super(key: key);
+  final String? verificationId;
+  OtpScreen({required this.phone, required this.verificationId, Key? key})
+      : super(key: key);
 
   @override
   _OtpScreenState createState() => _OtpScreenState();
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  String? _verificationCode;
   final TextEditingController pinController = new TextEditingController();
 
   @override
@@ -117,29 +119,50 @@ class _OtpScreenState extends State<OtpScreen> {
                   ? null
                   : () async {
                       try {
+                        showCupertinoDialog(
+                          context: context,
+                          builder: (context) => CupertinoAlertDialog(
+                            content: Container(
+                              height: 50,
+                              width: 50,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                    color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        );
                         await FirebaseAuth.instance
                             .signInWithCredential(PhoneAuthProvider.credential(
-                                verificationId: _verificationCode!,
+                                verificationId: widget.verificationId!,
                                 smsCode: pinController.text))
                             .then((value) async {
                           if (value.user != null) {
-                            if (await StorageService().userExists(value.user!.uid)) {
+                            if (await StorageService()
+                                .userExists(value.user!.uid)) {
                               UserModel user = UserModel.fromJson(
                                   await StorageService()
                                       .getUserDataById(value.user!.uid));
 
-                              Get.offAll(ProfilePage(user: user, uid: value.user!.uid,));
+                              Get.offAll(ProfilePage(
+                                user: user,
+                                uid: value.user!.uid,
+                              ));
                             } else {
-                              Get.off(NewUserpage(newUser: value.user,));
+                              Get.offAll(NewUserpage(
+                                newUser: value.user,
+                              ));
                             }
                           }
                         });
                       } catch (e) {
                         print(e);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Invalid SMS Code!")));
+                        Get.back();
+                        Get.back();
                       }
-                     
-                    }
-                    ,
+                    },
               child: Container(
                 height: 50,
                 decoration: BoxDecoration(
@@ -156,8 +179,7 @@ class _OtpScreenState extends State<OtpScreen> {
           Center(
             child: InkWell(
               onTap: () {
-                Get.back();
-
+                Get.offAll(RegisterPhonePage());
               },
               child: Text(
                 "Edit Phone Number?",
@@ -168,46 +190,5 @@ class _OtpScreenState extends State<OtpScreen> {
         ],
       ),
     );
-  }
-
-  _verifyPhone() async {
-    await FirebaseAuth.instance.verifyPhoneNumber(
-        phoneNumber: '+91${widget.phone}',
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          await FirebaseAuth.instance
-              .signInWithCredential(credential)
-              .then((value) async {
-            if (value.user != null) {
-              UserModel user = UserModel.fromJson(await StorageService().getUserDataById(value.user!.uid));
-              Get.offAll(ProfilePage(user: user, uid:value.user!.uid));
-            }
-          });
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          BotToast.showText(
-                            contentColor: almostWhite,
-                            textStyle: TextStyle(color: black),
-                            text:
-                                e.message!,
-                            duration: Duration(seconds: 3));
-        },
-        codeSent: (String verficationID, int? resendToken) {
-          setState(() {
-            _verificationCode = verficationID;
-          });
-        },
-        codeAutoRetrievalTimeout: (String verificationID) {
-          setState(() {
-            _verificationCode = verificationID;
-          });
-        },
-        timeout: Duration(seconds: 120));
-  }
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    _verifyPhone();
   }
 }
