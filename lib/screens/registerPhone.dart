@@ -133,7 +133,7 @@ class _RegisterPhonePageState extends State<RegisterPhonePage> {
             _verificationCode = verficationID;
           });
           Get.offAll(
-              OtpScreen(verificationId: _verificationCode, phone: phone.text));
+              OtpScreen(verificationId: verficationID, phone: phone.text));
         },
         codeAutoRetrievalTimeout: (String verificationID) {
           setState(() {

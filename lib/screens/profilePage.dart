@@ -24,13 +24,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   void initState() {
-    DynamicLinks.handleDynamicLink();
+    
     // TODO: implement initState
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    DynamicLinks.handleDynamicLink();
     print(widget.user.getDetails());
     return Scaffold(
         appBar: AppBar(
@@ -151,10 +152,24 @@ class _ProfilePageState extends State<ProfilePage> {
               icon: Icon(Icons.email),
             ),
             space(20),
+            if(widget.user.github!=null && widget.user.github!="") DetailButton(
+              onTap: () async {
+                String url = 'https://github.com/' + widget.user.github!;
+                if (await canLaunch(url)) {
+                  await launch(url);
+                } else {
+                  throw 'Could not launch $url';
+                }
+              },
+              text: widget.user.github!,
+              icon: Icon(Icons.code),
+            ),
+            space(20),
             DetailBox(
               fieldName: "About",
               fieldtext: widget.user.about!,
-            )
+            ),
+
           ]),
         ));
   }

@@ -8,6 +8,7 @@ class UserModel {
   String? about;
   String? phone;
   String? imageUrl;
+  String? github;
 
   UserModel(
       {required this.name,
@@ -16,7 +17,8 @@ class UserModel {
       this.about =
           "Lorem Ipsum, sometimes referred to as 'lipsum', is the placeholder text used in design when creating content. It helps designers plan out where the content will sit, without needing to wait for the content to be written and approved. It originally comes from a Latin text, but to today's reader, it's seen as gibberish.",
       required this.phone,
-      this.imageUrl});
+      this.imageUrl,
+      this.github});
 
   UserModel.fromJson(Map<String, dynamic> json) {
     this.name = json['name'];
@@ -25,6 +27,7 @@ class UserModel {
     this.about = json['about'];
     this.phone = json['phone'];
     this.imageUrl = json['imageUrl'];
+    this.github = json['github'];
   }
 
   Map<String, dynamic> toJson() {
@@ -35,6 +38,7 @@ class UserModel {
     data['about'] = this.about;
     data['phone'] = this.phone;
     data['imageUrl'] = this.imageUrl;
+    data['github'] = this.github;
     return data;
   }
 

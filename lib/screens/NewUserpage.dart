@@ -6,6 +6,7 @@ import 'package:profiledemo/models/user.dart';
 import 'package:profiledemo/screens/components.dart';
 import 'package:profiledemo/screens/profilePage.dart';
 import 'package:profiledemo/screens/registerPhone.dart';
+import 'package:profiledemo/services/signIn.dart';
 import 'package:profiledemo/services/storageServices.dart';
 import 'package:profiledemo/styles.dart';
 import 'package:flutter_svg/svg.dart';
@@ -20,12 +21,29 @@ class NewUserpage extends StatelessWidget {
   final TextEditingController city = new TextEditingController();
   final TextEditingController about = new TextEditingController();
   final TextEditingController imageUrl = new TextEditingController();
+  final TextEditingController github = new TextEditingController();
   NewUserpage({required this.newUser, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(actions: [
+            FlatButton(
+                onPressed: () {
+                  AuthService.signOut();
+                },
+                child: Row(
+                  children: [
+                    Text('Sign Out  ',
+                        style: TextStyle(
+                            fontSize: 14,
+                            color: red,
+                            fontWeight: FontWeight.bold)),
+                    Icon(CupertinoIcons.arrow_uturn_right, color: red)
+                  ],
+                )),
+            // SizedBox(width: 20,)
+          ],),
       body: ListView(
         padding: EdgeInsets.all(16),
         children: [
@@ -100,6 +118,17 @@ class NewUserpage extends StatelessWidget {
           //   keyboardType: TextInputType.url,
           //   style: bodyText2White60,
           // ),
+          space(20),
+          TextField(
+            controller: github,
+            decoration: InputDecoration(
+              // counterText: "",
+
+              labelText: "Enter your Github ID",
+            ),
+            keyboardType: TextInputType.name,
+            style: bodyText2White60,
+          ),
           space(50),
           Obx(() => FlatButton(
                 onPressed: _canContinue.value
@@ -124,7 +153,8 @@ class NewUserpage extends StatelessWidget {
                             city: city.text,
                             phone: newUser!.phoneNumber,
                             about: about.text,
-                            imageUrl: imageUrl.text);
+                            imageUrl: imageUrl.text,
+                            github: github.text);
                         await StorageService()
                             .addUser(newUser!.uid, user.toJson());
                         Get.offAll(ProfilePage(user: user, uid: newUser!.uid,));
@@ -150,7 +180,7 @@ class NewUserpage extends StatelessWidget {
     if (about.text.length < 1 ||
         email.text.length < 1 ||
         name.text.length < 1 ||
-        city.text.length < 1) {
+        city.text.length < 1 ) {
       return false;
     } else {
       return true;

@@ -9,6 +9,7 @@ import 'package:profiledemo/screens/NewUserpage.dart';
 import 'package:profiledemo/screens/otpScreen.dart';
 import 'package:profiledemo/screens/profilePage.dart';
 import 'package:profiledemo/screens/registerPhone.dart';
+import 'package:profiledemo/screens/splashScreen.dart';
 import 'package:profiledemo/services/handleDynamicLinks.dart';
 import 'package:profiledemo/services/signIn.dart';
 import 'package:profiledemo/services/storageServices.dart';
@@ -75,26 +76,33 @@ class _MyHomeState extends State<MyHome> {
   Widget build(BuildContext context) {
     if (user != null) {
       getdata(user);
+    } else {
+      Get.offAll(RegisterPhonePage());
     }
-    return RegisterPhonePage();
+    return SplashScreen();
   }
 
   @override
   void initState() {
+    DynamicLinks.handleDynamicLink();
     // TODO: implement initState
     super.initState();
   }
 }
 
 getdata(user) async {
-  FirebaseFirestore.instance
-      .collection("users")
-      .doc(user.uid)
-      .get()
-      .then((user) {
-    Get.offAll(
-        ProfilePage(uid: user.id, user: UserModel.fromJson(user.data()!)));
-  });
+  if (await StorageService().userExists(user.uid)) {
+    FirebaseFirestore.instance
+        .collection("users")
+        .doc(user.uid)
+        .get()
+        .then((user) {
+      Get.offAll(
+          ProfilePage(uid: user.id, user: UserModel.fromJson(user.data()!)));
+    });
+  } else {
+    Get.offAll(NewUserpage(newUser: user));
+  }
 }
 
 

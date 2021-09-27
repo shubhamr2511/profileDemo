@@ -19,7 +19,7 @@ class StorageService {
         .catchError((error) => print("Failed to add user: $error"));
   }
 
-  userExists(String uid) async {
+  Future<bool> userExists(String uid) async {
     return (await users.doc(uid).get()).exists;
   }
 }

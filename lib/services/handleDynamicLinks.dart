@@ -1,14 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:profiledemo/models/user.dart';
 import 'package:profiledemo/screens/components.dart';
-import 'package:profiledemo/screens/profilePage.dart';
-import 'package:profiledemo/screens/testScreen.dart';
-import 'package:profiledemo/services/signIn.dart';
 import 'package:profiledemo/services/storageServices.dart';
 import 'package:share/share.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -64,9 +60,9 @@ class DynamicLinks {
       if (target != null) {
         UserModel userModel =
             UserModel.fromJson(await StorageService().getUserDataById(target));
-        Get.to(
+        Get.to(()=>
             // ProfilePage(uid: target, user: userModel)
-            buildPage(target, userModel));
+            BuildPage(target, userModel));
         print(target);
       }
       // }
@@ -133,10 +129,10 @@ Widget _buildUserDetails(UserModel user, uid) {
       ]));
 }
 
-class buildPage extends StatelessWidget {
+class BuildPage extends StatelessWidget {
   final target;
   final userModel;
-  const buildPage(this.target, this.userModel, {Key? key}) : super(key: key);
+  const BuildPage(this.target, this.userModel, {Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

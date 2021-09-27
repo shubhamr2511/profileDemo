@@ -11,12 +11,14 @@ import 'package:profiledemo/services/storageServices.dart';
 import 'package:profiledemo/styles.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:get/get.dart';
+import 'dart:async';
 
 var _canContinue = false.obs;
+var _canResend = false.obs;
 
 class OtpScreen extends StatefulWidget {
   final String phone;
-  final String? verificationId;
+  String? verificationId;
   OtpScreen({required this.phone, required this.verificationId, Key? key})
       : super(key: key);
 
@@ -25,6 +27,33 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
+  @override
+  void initState() {
+    _start.value = 90;
+    startTimer();
+    // TODO: implement initState
+    super.initState();
+  }
+
+  Timer? _timer;
+  var _start = 90.obs;
+
+  void startTimer() {
+    _canResend.value = false;
+    const oneSec = const Duration(seconds: 1);
+    _timer = new Timer.periodic(
+      oneSec,
+      (Timer timer) {
+        if (_start.value == 0) {
+          timer.cancel();
+          _canResend.value = true;
+        } else {
+          _start.value--;
+        }
+      },
+    );
+  }
+
   final TextEditingController pinController = new TextEditingController();
 
   @override
@@ -98,17 +127,27 @@ class _OtpScreenState extends State<OtpScreen> {
                   "Didn't receive code?",
                   style: bodyText2White,
                 ),
-                InkWell(
-                  onTap: () {
-                    print("tap");
-                    pinController.clear();
-                    // _verifyPhone(false);
-                  },
-                  child: Text(
-                    " Resend Code",
-                    style: bodyText2.copyWith(color: blue),
+                Obx(
+                  () => InkWell(
+                    onTap: _canResend.value
+                        ? () {
+                            print("tap");
+                            pinController.clear();
+                            _verifyPhone();
+                            _start.value = 90;
+                            startTimer();
+                          }
+                        : null,
+                    child: Text(
+                      " Resend Code ",
+                      style: bodyText2.copyWith(
+                          color: _canResend.value ? blue : grey),
+                    ),
                   ),
                 ),
+                Obx(() => Text("${_start.value}",
+                    style: bodyText2.copyWith(
+                        color: _canResend.value ? grey : white)))
               ],
             ),
           ),
@@ -118,7 +157,7 @@ class _OtpScreenState extends State<OtpScreen> {
               onPressed: !_canContinue.value
                   ? null
                   : () async {
-                      try {
+                    print(pinController.text + " " + widget.phone);
                         showCupertinoDialog(
                           context: context,
                           builder: (context) => CupertinoAlertDialog(
@@ -132,6 +171,7 @@ class _OtpScreenState extends State<OtpScreen> {
                             ),
                           ),
                         );
+                      try {
                         await FirebaseAuth.instance
                             .signInWithCredential(PhoneAuthProvider.credential(
                                 verificationId: widget.verificationId!,
@@ -190,5 +230,51 @@ class _OtpScreenState extends State<OtpScreen> {
         ],
       ),
     );
+  }
+
+  _verifyPhone() async {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        content: Container(
+          height: 50,
+          width: 50,
+          child: Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
+        ),
+      ),
+    );
+    print("Sending...");
+    await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: '+91${widget.phone}',
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          await FirebaseAuth.instance
+              .signInWithCredential(credential)
+              .then((value) async {
+            if (value.user != null) {
+              UserModel user = UserModel.fromJson(
+                  await StorageService().getUserDataById(value.user!.uid));
+              Get.offAll(ProfilePage(user: user, uid: value.user!.uid));
+            }
+          });
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          Get.back();
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(e.message!)));
+        },
+        codeSent: (String verficationID, int? resendToken) {
+          setState(() {
+            widget.verificationId = verficationID;
+          });
+          Get.back();
+        },
+        codeAutoRetrievalTimeout: (String verificationID) {
+          setState(() {
+            widget.verificationId = verificationID;
+          });
+        },
+        timeout: Duration(seconds: 120));
   }
 }
